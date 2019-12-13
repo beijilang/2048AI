@@ -3,7 +3,38 @@ from tkinter import Frame, Label, CENTER
 
 import logic
 import constrants as c
+import pprint
 
+class Game():
+    def __init__(self):
+        self.grid_cells = []
+        self.init_matrix()
+
+        self.commands = {1: logic.up, 2: logic.down,
+                         3: logic.left, 4: logic.right}
+
+
+    def init_matrix(self):
+        self.matrix = logic.new_game(4)
+        self.history_matrixs = list()
+        self.matrix = logic.add_two(self.matrix)
+        self.matrix = logic.add_two(self.matrix)
+
+    def play(self):
+        while logic.game_state(self.matrix) == 'not over':
+            print("RUNNING")
+            key = random.randint(0, 4)
+            if key in self.commands:
+                self.matrix, done = self.commands[key](self.matrix)
+                if done:
+                    self.matrix = logic.add_two(self.matrix)
+                    # record last move
+                    self.history_matrixs.append(self.matrix)
+                    done = False
+                    if logic.game_state(self.matrix) == 'win':
+                        print('you win')
+                    if logic.game_state(self.matrix) == 'lose':
+                        print('you lose')
 
 class GameGrid(Frame):
     def __init__(self):
@@ -78,7 +109,7 @@ class GameGrid(Frame):
             self.update_grid_cells()
             print('back on step total step:', len(self.history_matrixs))
         elif key in self.commands:
-            self.matrix, done = self.commands[repr(event.char)](self.matrix)
+            self.matrix, done = self.commands[key](self.matrix)
             if done:
                 self.matrix = logic.add_two(self.matrix)
                 # record last move
@@ -103,4 +134,7 @@ class GameGrid(Frame):
         self.matrix[index[0]][index[1]] = 2
 
 
-gamegrid = GameGrid()
+# gamegrid = GameGrid()
+
+game = Game()
+game.play()
