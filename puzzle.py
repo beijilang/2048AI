@@ -9,6 +9,7 @@ class Game():
     def __init__(self):
         self.grid_cells = []
         self.init_matrix()
+        self.score = 0
 
         self.commands = {1: logic.up, 2: logic.down,
                          3: logic.left, 4: logic.right}
@@ -25,8 +26,10 @@ class Game():
             print("RUNNING")
             key = random.randint(0, 4)
             if key in self.commands:
-                self.matrix, done = self.commands[key](self.matrix)
+                self.matrix, done, score = self.commands[key](self.matrix)
+                self.score += score
                 if done:
+                    print(self.score)
                     self.matrix = logic.add_two(self.matrix)
                     # record last move
                     self.history_matrixs.append(self.matrix)
