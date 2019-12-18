@@ -4,6 +4,7 @@ from tkinter import Frame, Label, CENTER
 import logic
 import constrants as c
 import pprint
+import numpy as np 
 
 class Game():
     def __init__(self):
@@ -11,25 +12,40 @@ class Game():
         self.init_matrix()
         self.score = 0
 
-        self.commands = {1: logic.up, 2: logic.down,
-                         3: logic.left, 4: logic.right}
+        self.commands = {0: logic.up, 1: logic.down,
+                         2: logic.left, 3: logic.right}
 
-
-    def init_matrix(self):
+    def predict(self):
+        num_test = 5
+        scores = np.array([0,0,0,0])
+        for i in range(4):
+            cur_scores = 0
+            for j in range(num_test):
+                self.matrix, done, score = self.commands[i](self.matrix)
+                if not done:
+                    cur_scores += score
+            scores[i] = score/num_test
+        if max(scores) == 0:
+            return np.random.randint(4)
+        return np.argmax(score)
+    def init_matrix(self):  
         self.matrix = logic.new_game(4)
         self.history_matrixs = list()
         self.matrix = logic.add_two(self.matrix)
         self.matrix = logic.add_two(self.matrix)
 
-    def play(self):
+    def play(self, strategy):
         while logic.game_state(self.matrix) == 'not over':
-            print("RUNNING")
-            key = random.randint(0, 4)
+            if strategy == 0:
+                key = np.random.randint(4)
+            elif strategy == 1:
+                key = self.predict()
             if key in self.commands:
                 self.matrix, done, score = self.commands[key](self.matrix)
                 self.score += score
+                print(self.score)
                 if done:
-                    print(self.score)
+                    
                     self.matrix = logic.add_two(self.matrix)
                     # record last move
                     self.history_matrixs.append(self.matrix)
@@ -140,4 +156,4 @@ class GameGrid(Frame):
 # gamegrid = GameGrid()
 
 game = Game()
-game.play()
+game.play(1)
