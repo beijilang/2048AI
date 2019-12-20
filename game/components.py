@@ -25,6 +25,13 @@ class Tile:
         self.value = int(2 ** self.power) if self.power else None
         self.color = (255, 255, 255)
         self.bg_color = Tile.bg_colors[self.power]
+        self.has_merged = False  # in one round, a tile can be merged only once
+
+    def set_has_merged(self, value):
+        self.has_merged = value
+
+    def get_has_merged(self):
+        return self.has_merged
 
     def increment(self):
         """
@@ -73,7 +80,7 @@ class Tile:
                 raise Exception("value cannot be converted to power, must be power of 2")
         else:
             raise Exception("value must be int")
-        return power
+        return int(power)
 
     def get_bg_color(self):
         return self.bg_color
@@ -243,8 +250,10 @@ class Board:
                         tile.set_power(None)
                         tile = next_tile
                         changed = True
-                    elif tile.power == next_tile.power:  # if 2 tile has equal power/value, merge them and delete one
+                    elif tile.power == next_tile.power and not next_tile.get_has_merged():
+                        # if 2 tile has equal power/value, merge them and delete one
                         next_tile.increment()
+                        next_tile.set_has_merged(True)
                         tile.set_power(None)
                         score += next_tile.get_value()
                         changed = True
@@ -252,6 +261,11 @@ class Board:
                     else:
                         # next tile and current tile have unequal value, and is not None, so curr tile stops where it is
                         break
+
+        # clear has merged for all tiles
+        for row in self.grid:
+            for tile in row:
+                tile.set_has_merged(False)
         return score, changed
 
     def is_done(self):

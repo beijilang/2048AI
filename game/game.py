@@ -12,7 +12,7 @@ class Game:
         self.matrix = matrix
         self.board = Board(matrix=self.matrix)
         self.width = 800
-        self.height = 1000
+        self.height = 950
         self.key_down = False
         self.margin = margin
         self.isDone = False
@@ -62,7 +62,7 @@ class Game:
             self.update_score()
             if self.board.is_done():
                 self.isDone = True
-                self.update_is_done()
+            self.update_msg()
             pygame.display.flip()
 
         pygame.quit()
@@ -75,6 +75,9 @@ class Game:
             print('restart')
             self.__init__(matrix=self.matrix)
             return
+        elif event.key == pygame.K_q:
+            print('quit game')
+            sys.exit(0)
         if not self.isDone:
             if event.key == pygame.K_LEFT:
                 score, changed = self.board.move(LEFT)
@@ -106,12 +109,14 @@ class Game:
         text = font.render(text_content, 30, (255, 255, 255))
         self.screen.blit(text, (50, 820))
 
-    def update_is_done(self):
+    def update_msg(self):
         font = pygame.font.Font(None, 32)
-        text_content = 'Game ends, press r to restart'
+        if self.isDone:
+            text_content = 'Game ends, press r to restart'
+        else:
+            text_content = "Click 'q' to quit the game"
         text = font.render(text_content, 30, (255, 255, 255))
         self.screen.blit(text, (50, 870))
-
 
 
 if __name__ == "__main__":
