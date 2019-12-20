@@ -22,7 +22,7 @@ class Tile:
 
     def __init__(self, power=None):
         self.power = power
-        self.value = 2 ** self.power if self.power else None
+        self.value = int(2 ** self.power) if self.power else None
         self.color = (255, 255, 255)
         self.bg_color = Tile.bg_colors[self.power]
 
@@ -32,7 +32,7 @@ class Tile:
         :return:
         """
         self.power += 1
-        self.value = 2 ** self.power if self.power else None
+        self.value = int(2 ** self.power) if self.power else None
         self.update_color()
 
     def update_color(self):
@@ -61,9 +61,19 @@ class Tile:
     @staticmethod
     def power_to_value(power):
         if type(power) == int:
-            return 2 ** power
+            return int(2 ** power)
         else:
             return None
+
+    @staticmethod
+    def value_to_power(value):
+        if type(value) == int:
+            power = math.log(value, 2)
+            if power != int(power):
+                raise Exception("value cannot be converted to power, must be power of 2")
+        else:
+            raise Exception("value must be int")
+        return power
 
     def get_bg_color(self):
         return self.bg_color
@@ -88,15 +98,34 @@ class Tile:
 
 class Board:
 
-    def __init__(self, dimension=4):
+    def __init__(self, dimension=4, matrix=None):
         # initialize grid to 4x4 tile board
         self.grid = []
         self.dimension = dimension
         self.bg_color = (172, 157, 142)
+        if matrix:
+            self.construct_with_matrix(matrix)
+            return
         for i in range(4):
             row = []
             for j in range(4):
                 row.append(Tile())
+            self.grid.append(row)
+
+    def construct_with_matrix(self, matrix):
+        num_row = len(matrix)
+        for row in matrix:
+            if len(row) != num_row:
+                raise Exception("not a matrix, must be nxn matrix")
+            for val in row:
+                if type(val) is not int:
+                    raise Exception("matrix value invalid, must be all int")
+        # construct
+        self.grid = []
+        for matrix_row in matrix:
+            row = []
+            for val in matrix_row:
+                row.append(Tile(Tile.value_to_power(val)))
             self.grid.append(row)
 
     def get_value_board(self):
@@ -165,23 +194,33 @@ class Board:
 
     def move(self, direction):
         score = 0
+        changed = False
         if direction == UP:
             self.rotate_cw()
             self.rotate_cw()
-            score = self.move_down()
+            score, changed = self.move_down()
             self.rotate_cw()
             self.rotate_cw()
         elif direction == DOWN:
-            score = self.move_down()
+            score, changed = self.move_down()
         elif direction == LEFT:
             self.rotate_ccw()
-            score = self.move_down()
+            score, changed = self.move_down()
             self.rotate_cw()
         elif direction == RIGHT:
             self.rotate_cw()
-            score = self.move_down()
+            score, changed = self.move_down()
             self.rotate_ccw()
-        return score
+        return score, changed
+
+    def __str__(self):
+        result = ''
+        for row in self.grid:
+            for tile in row:
+                value = str(0) if not tile.get_value() else str(tile.get_value())
+                result += value + ', '
+            result += '\n'
+        return result
 
     def move_down(self):
         """
@@ -189,6 +228,7 @@ class Board:
         :return:
         """
         score = 0
+        changed = False
         for row_index in range(self.dimension - 1, -1, -1):  # 从倒数第二行数到第0行
             row = self.grid[row_index]
             for col_index in range(len(row)):  # iterate through every tile in the row
@@ -202,12 +242,14 @@ class Board:
                         next_tile.set_power(tile.get_power())
                         tile.set_power(None)
                         tile = next_tile
+                        changed = True
                     elif tile.power == next_tile.power:  # if 2 tile has equal power/value, merge them and delete one
                         next_tile.increment()
                         tile.set_power(None)
                         score += next_tile.get_value()
+                        changed = True
                         break
                     else:
                         # next tile and current tile have unequal value, and is not None, so curr tile stops where it is
                         break
-        return score
+        return score, changed

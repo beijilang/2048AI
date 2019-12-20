@@ -5,10 +5,11 @@ from constants import *
 
 
 class Game:
-    def __init__(self, dimension=4, margin=10):
+    def __init__(self, dimension=4, margin=10, matrix=None):
         self.score = 0
         self.dimension = dimension
-        self.board = Board()
+        self.matrix = matrix
+        self.board = Board(matrix=self.matrix)
         self.width = 800
         self.height = 1000
         self.key_down = False
@@ -51,6 +52,7 @@ class Game:
                     return
                 elif event.type == pygame.KEYDOWN:
                     self.handle_key_down(event)
+                    print(self.board)
                 elif event.type == pygame.KEYUP:
                     self.handle_key_up(event)
 
@@ -63,27 +65,35 @@ class Game:
 
     def handle_key_down(self, event):
         self.key_down = True
+        score = 0
+        changed = False
         if event.key == pygame.K_LEFT:
-            self.score += self.board.move(LEFT)
+            score, changed = self.board.move(LEFT)
         elif event.key == pygame.K_RIGHT:
-            self.score += self.board.move(RIGHT)
+            score, changed = self.board.move(RIGHT)
         elif event.key == pygame.K_UP:
-            self.score += self.board.move(UP)
+            score, changed = self.board.move(UP)
         elif event.key == pygame.K_DOWN:
-            self.score += self.board.move(DOWN)
+            score, changed = self.board.move(DOWN)
+        elif event.key == pygame.K_r:
+            print('restart')
+            self.__init__(matrix=self.matrix)
+
         else:
             return
-        # add a random tile, 2 or 4
-        is_4 = random() < 0.1
-        empty_pos = self.board.get_empty_tiles_pos()
-        if len(empty_pos) == 0:
-            self.done = True
-            return  # game ends
-        target_pos = empty_pos[randint(0, len(empty_pos) - 1)]
-        if is_4:
-            self.board.set_tile_power(target_pos, 2)
-        else:
-            self.board.set_tile_power(target_pos, 1)
+        self.score += score
+        if changed:
+            # add a random tile, 2 or 4
+            is_4 = random() < 0.1
+            empty_pos = self.board.get_empty_tiles_pos()
+            if len(empty_pos) == 0:
+                self.done = True
+                return  # game ends
+            target_pos = empty_pos[randint(0, len(empty_pos) - 1)]
+            if is_4:
+                self.board.set_tile_power(target_pos, 2)
+            else:
+                self.board.set_tile_power(target_pos, 1)
 
     def handle_key_up(self, event):
         self.key_down = False
@@ -96,5 +106,12 @@ class Game:
 
 
 if __name__ == "__main__":
+    m = [
+        [2, 2, 4, 8],
+        [2, 2, 4, 8],
+        [2, 2, 4, 8],
+        [2, 2, 4, 8],
+    ]
+    # game = Game(matrix=m)
     game = Game()
     game.main()
