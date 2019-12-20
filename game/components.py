@@ -164,28 +164,31 @@ class Board:
         return result
 
     def move(self, direction):
+        score = 0
         if direction == UP:
             self.rotate_cw()
             self.rotate_cw()
-            self.move_down()
+            score = self.move_down()
             self.rotate_cw()
             self.rotate_cw()
         elif direction == DOWN:
-            self.move_down()
+            score = self.move_down()
         elif direction == LEFT:
             self.rotate_ccw()
-            self.move_down()
+            score = self.move_down()
             self.rotate_cw()
         elif direction == RIGHT:
             self.rotate_cw()
-            self.move_down()
+            score = self.move_down()
             self.rotate_ccw()
+        return score
 
     def move_down(self):
         """
         move all tiles down, merge if available
         :return:
         """
+        score = 0
         for row_index in range(self.dimension - 1, -1, -1):  # 从倒数第二行数到第0行
             row = self.grid[row_index]
             for col_index in range(len(row)):  # iterate through every tile in the row
@@ -202,7 +205,9 @@ class Board:
                     elif tile.power == next_tile.power:  # if 2 tile has equal power/value, merge them and delete one
                         next_tile.increment()
                         tile.set_power(None)
+                        score += next_tile.get_value()
                         break
                     else:
                         # next tile and current tile have unequal value, and is not None, so curr tile stops where it is
                         break
+        return score
