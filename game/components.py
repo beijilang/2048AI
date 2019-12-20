@@ -253,3 +253,28 @@ class Board:
                         # next tile and current tile have unequal value, and is not None, so curr tile stops where it is
                         break
         return score, changed
+
+    def is_done(self):
+        value_matrix = self.get_value_board()
+        for row_index in range(len(self.grid)):
+            row = self.grid[row_index]
+            for col_index in range(len(row)):
+                neighbors = self.get_available_neighbors(row_index, col_index)
+                for neighbor in neighbors:
+                    if value_matrix[neighbor[0]][neighbor[1]] == value_matrix[row_index][col_index]:
+                        return False
+                    if value_matrix[row_index][col_index] is None:
+                        return False
+        return True
+
+    def get_available_neighbors(self, row, col):
+        result = []
+        if row > 0:
+            result.append((row - 1, col))  # add left neighbor
+        if row < self.dimension - 1:
+            result.append((row + 1, col))  # add right neighbor
+        if col > 0:
+            result.append((row, col - 1))
+        if col < self.dimension - 1:
+            result.append((row, col + 1))
+        return result

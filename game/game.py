@@ -2,6 +2,7 @@ from components import *
 import pygame
 from random import randint, random
 from constants import *
+import sys
 
 
 class Game:
@@ -14,7 +15,7 @@ class Game:
         self.height = 1000
         self.key_down = False
         self.margin = margin
-        self.done = False
+        self.isDone = False
         self.size = self.width, self.height
         self.clock = pygame.time.Clock()
         self.block_size = (self.width - (self.dimension + 1) * self.margin) // self.dimension
@@ -59,6 +60,9 @@ class Game:
             self.screen.fill(self.board.bg_color)
             self.draw_grid()
             self.update_score()
+            if self.board.is_done():
+                self.isDone = True
+                self.update_is_done()
             pygame.display.flip()
 
         pygame.quit()
@@ -67,28 +71,26 @@ class Game:
         self.key_down = True
         score = 0
         changed = False
-        if event.key == pygame.K_LEFT:
-            score, changed = self.board.move(LEFT)
-        elif event.key == pygame.K_RIGHT:
-            score, changed = self.board.move(RIGHT)
-        elif event.key == pygame.K_UP:
-            score, changed = self.board.move(UP)
-        elif event.key == pygame.K_DOWN:
-            score, changed = self.board.move(DOWN)
-        elif event.key == pygame.K_r:
+        if event.key == pygame.K_r:
             print('restart')
             self.__init__(matrix=self.matrix)
-
-        else:
             return
+        if not self.isDone:
+            if event.key == pygame.K_LEFT:
+                score, changed = self.board.move(LEFT)
+            elif event.key == pygame.K_RIGHT:
+                score, changed = self.board.move(RIGHT)
+            elif event.key == pygame.K_UP:
+                score, changed = self.board.move(UP)
+            elif event.key == pygame.K_DOWN:
+                score, changed = self.board.move(DOWN)
+            else:
+                return
         self.score += score
         if changed:
             # add a random tile, 2 or 4
             is_4 = random() < 0.1
             empty_pos = self.board.get_empty_tiles_pos()
-            if len(empty_pos) == 0:
-                self.done = True
-                return  # game ends
             target_pos = empty_pos[randint(0, len(empty_pos) - 1)]
             if is_4:
                 self.board.set_tile_power(target_pos, 2)
@@ -102,7 +104,14 @@ class Game:
         font = pygame.font.Font(None, 64)
         text_content = 'Score: ' + str(self.score)
         text = font.render(text_content, 30, (255, 255, 255))
-        self.screen.blit(text, (50, 850))
+        self.screen.blit(text, (50, 820))
+
+    def update_is_done(self):
+        font = pygame.font.Font(None, 32)
+        text_content = 'Game ends, press r to restart'
+        text = font.render(text_content, 30, (255, 255, 255))
+        self.screen.blit(text, (50, 870))
+
 
 
 if __name__ == "__main__":
