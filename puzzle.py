@@ -15,19 +15,65 @@ class Game():
         self.commands = {0: logic.up, 1: logic.down,
                          2: logic.left, 3: logic.right}
 
-    def predict(self):
-        num_test = 5
-        scores = np.array([0,0,0,0])
-        for i in range(4):
-            cur_scores = 0
-            for j in range(num_test):
-                self.matrix, done, score = self.commands[i](self.matrix)
-                if not done:
-                    cur_scores += score
-            scores[i] = score/num_test
-        if max(scores) == 0:
-            return np.random.randint(4)
-        return np.argmax(score)
+    # trying maximin
+    def predict_maximin(self,matrix,depth = 2):
+        if depth == 0:
+            cur_scores = []
+            for i in range(4):
+                new_matrix, done, action_score = self.commands[i](matrix)
+                a_score = self.singlePredict(new_matrix, done)
+            cur_scores.append(a_score + action_score)
+            return np.argmax(cur_scores)
+        else:
+            num_test = 3
+            scores = np.array([0,0,0,0])
+            depth -= 1
+            for i in range(4):
+                cur_scores = []
+                for j in range(num_test):
+                    new_matrix, done, action_score = self.commands[i](matrix)
+                    a_score = self.singlePredict(new_matrix, done)
+                    recur_score = self.predict_maximin(new_matrix,depth)
+                    cur_scores.append(0.6 * a_score + 0.6 * action_score + recur_score)
+                # minimum = np.argmin(cur_scores)
+
+                scores[i] = (np.sum(cur_scores)/num_test)
+            if max(scores) == 0:
+                return np.random.randint(4)
+           
+            return np.argmax(scores)
+
+    def singlePredict(self, matrix, done):
+        maxi_pos = np.argmax(matrix)
+        cur_scores = 0
+        hor = 0
+        ver = 0
+
+        for i in range(3):
+            for j in range(3): 
+                if(matrix[i][j] == matrix[i+1][j]):
+                    hor += matrix[i][j]
+                if(matrix[i][j] == matrix[i][j+1]):
+                    ver += matrix[i][j]
+                if(matrix[i][j] == matrix[i+1][j]/2 or matrix[i][j]/2 == matrix[i+1][j]):
+                    hor += min(matrix[i][j], matrix[i+1][j])
+                if(matrix[i][j] == matrix[i][j+1]/2 or matrix[i][j]/2 == matrix[i][j+1]):
+                    ver += min(matrix[i][j], matrix[i][j+1])
+        if(maxi_pos == 0 or maxi_pos == 3 or maxi_pos == 15 or maxi_pos == 12):
+            cur_scores += np.amax(matrix)
+
+        if done:
+            cur_scores += np.count_nonzero(matrix==0) * np.amax(matrix)/16
+        else:
+            cur_scores -= 10000
+
+        if logic.game_state(matrix) == 'lose':
+            cur_scores -= 100000
+
+        # I think we need to weight this
+        cur_scores += max(hor,ver)/5
+        return cur_scores
+
     def init_matrix(self):  
         self.matrix = logic.new_game(4)
         self.history_matrixs = list()
@@ -39,11 +85,11 @@ class Game():
             if strategy == 0:
                 key = np.random.randint(4)
             elif strategy == 1:
-                key = self.predict()
+                key = self.predict_maximin(self.matrix)
             if key in self.commands:
                 self.matrix, done, score = self.commands[key](self.matrix)
                 self.score += score
-                print(self.score)
+                # print(self.score)
                 if done:
                     
                     self.matrix = logic.add_two(self.matrix)
@@ -52,8 +98,12 @@ class Game():
                     done = False
                     if logic.game_state(self.matrix) == 'win':
                         print('you win')
+                        print(self.score)
+                        print(self.matrix)
                     if logic.game_state(self.matrix) == 'lose':
                         print('you lose')
+                        print(self.score)
+                        print(self.matrix)
 
 class GameGrid(Frame):
     def __init__(self):
@@ -128,7 +178,8 @@ class GameGrid(Frame):
             self.update_grid_cells()
             print('back on step total step:', len(self.history_matrixs))
         elif key in self.commands:
-            self.matrix, done = self.commands[key](self.matrix)
+            self.matrix, done,score = self.commands[key](self.matrix)
+            print(done)
             if done:
                 self.matrix = logic.add_two(self.matrix)
                 # record last move
